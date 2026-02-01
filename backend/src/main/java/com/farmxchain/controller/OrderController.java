@@ -40,19 +40,18 @@ public class OrderController {
         this.jwtUtil = jwtUtil;
     }
 
-    // ==============================
-    // 🧑 CUSTOMER → PLACE ORDER
-    // ==============================
+    // ================= CREATE ORDER (CUSTOMER / DISTRIBUTOR)
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(
             @RequestBody Map<String, Object> payload,
             @RequestHeader("Authorization") String authHeader
     ) {
         User user = extractUser(authHeader);
-        String role = user.getRole().name().toUpperCase();
+        String role = user.getRole().name();
 
         if (!role.equals("CUSTOMER") && !role.equals("DISTRIBUTOR")) {
-            return ResponseEntity.status(403).body("Only customers or distributors can place orders");
+            return ResponseEntity.status(403)
+                    .body("Only customers or distributors can place orders");
         }
 
         Long productId = Long.valueOf(payload.get("productId").toString());
@@ -61,13 +60,16 @@ public class OrderController {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // 🔒 ROLE vs SELL_TO CHECK
-        if (role.equals("CUSTOMER") && !product.getTargetRole().equalsIgnoreCase("customer")) {
-            return ResponseEntity.badRequest().body("Retail customers cannot buy wholesale products");
+        if (role.equals("CUSTOMER") &&
+                !product.getTargetRole().equalsIgnoreCase("CUSTOMER")) {
+            return ResponseEntity.badRequest()
+                    .body("Customers cannot buy distributor products");
         }
 
-        if (role.equals("DISTRIBUTOR") && !product.getTargetRole().equalsIgnoreCase("distributor")) {
-            return ResponseEntity.badRequest().body("Distributors can only buy wholesale products");
+        if (role.equals("DISTRIBUTOR") &&
+                !product.getTargetRole().equalsIgnoreCase("DISTRIBUTOR")) {
+            return ResponseEntity.badRequest()
+                    .body("Distributors can only buy distributor products");
         }
 
         if (quantity > product.getQuantity()) {
@@ -78,20 +80,17 @@ public class OrderController {
         order.setProductId(product.getId());
         order.setProductName(product.getName());
         order.setFarmerUniqueId(product.getFarmerUniqueId());
-
         order.setBuyerUniqueId(user.getUniqueId());
         order.setBuyerRole(role);
-
         order.setQuantity(quantity);
         order.setPrice(product.getPrice());
         order.setTotalPrice(quantity * product.getPrice());
+        order.setStatus("PENDING");
 
         return ResponseEntity.ok(orderService.createOrder(order));
     }
 
-    // ==============================
-    // 👨‍🌾 FARMER → VIEW ORDERS
-    // ==============================
+    // ================= FARMER ORDERS
     @GetMapping("/farmer")
     public ResponseEntity<List<OrderResponseDto>> getFarmerOrders(
             @RequestHeader("Authorization") String authHeader
@@ -100,83 +99,61 @@ public class OrderController {
         requireFarmer(farmer);
 
         List<OrderResponseDto> response =
-            orderService.getOrdersByFarmer(farmer.getUniqueId())
-                .stream()
-                .map(this::toDto)
-                .toList();
+                orderService.getOrdersByFarmer(farmer.getUniqueId())
+                        .stream()
+                        .map(this::toDto)
+                        .toList();
 
         return ResponseEntity.ok(response);
     }
+@GetMapping("/customer")
+public ResponseEntity<List<OrderResponseDto>> getCustomerOrders(
+        @RequestHeader("Authorization") String authHeader
+) {
+    User customer = extractUser(authHeader);
+    requireCustomer(customer);
 
-    // ==============================
-    // 👤 CUSTOMER → VIEW MY ORDERS
-    // ==============================
-    @GetMapping("/customer")
-    public ResponseEntity<List<Order>> getCustomerOrders(
+    List<OrderResponseDto> response =
+        orderService.getOrdersByCustomer(customer.getUniqueId())
+            .stream()
+            .map(this::toDto)
+            .toList();
+
+    return ResponseEntity.ok(response);
+}
+
+    // ================= BUYER ORDERS (CUSTOMER / DISTRIBUTOR)
+    @GetMapping("/my")
+    public ResponseEntity<List<Order>> getMyOrders(
             @RequestHeader("Authorization") String authHeader
     ) {
-        User customer = extractUser(authHeader);
-        requireCustomer(customer);
-
+        User buyer = extractUser(authHeader);
         return ResponseEntity.ok(
-            orderService.getOrdersByCustomer(customer.getUniqueId())
+                orderService.getOrdersByCustomer(buyer.getUniqueId())
         );
     }
 
-    // ==============================
-    // 👨‍🌾 FARMER → UPDATE ORDER STATUS
-    // ==============================
+    // ================= FARMER UPDATE STATUS
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderResponseDto> updateOrderStatus(
+    public ResponseEntity<?> updateStatus(
             @PathVariable Long orderId,
-            @RequestBody Map<String, String> statusUpdate,
+            @RequestBody Map<String, String> payload,
             @RequestHeader("Authorization") String authHeader
     ) {
         User farmer = extractUser(authHeader);
         requireFarmer(farmer);
 
-        String newStatus = statusUpdate.get("status");
-
-        Order updatedOrder = orderService.updateStatus(orderId, newStatus);
-        return ResponseEntity.ok(toDto(updatedOrder));
+        Order updated = orderService.updateStatus(orderId, payload.get("status"));
+        return ResponseEntity.ok(toDto(updated));
     }
 
-    // ==============================
-    // 👤 CUSTOMER → CANCEL ORDER
-    // ==============================
-    @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelOrder(
-            @PathVariable Long id,
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        User customer = extractUser(authHeader);
-        requireCustomer(customer);
-
-        Order order = orderService.getOrderById(id);
-
-        if (!order.getBuyerUniqueId().equals(customer.getUniqueId())) {
-            return ResponseEntity.status(403)
-                    .body("Not allowed");
-        }
-
-        if (!order.getStatus().equals("PENDING")) {
-            return ResponseEntity.badRequest()
-                    .body("Order cannot be cancelled");
-        }
-
-        order.setStatus("CANCELLED");
-        return ResponseEntity.ok(orderService.createOrder(order));
-    }
-
-    // ==============================
-    // 🔧 HELPER METHODS
-    // ==============================
+    // ================= HELPERS
     private User extractUser(String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         String uniqueId = jwtUtil.extractUniqueId(token);
 
         return userRepository.findByUniqueId(uniqueId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     private OrderResponseDto toDto(Order order) {
@@ -187,9 +164,10 @@ public class OrderController {
         dto.setTotalPrice(order.getTotalPrice());
         dto.setStatus(order.getStatus());
         dto.setCreatedAt(order.getCreatedAt());
-        // Resolve buyer email from buyerUniqueId
+
         userRepository.findByUniqueId(order.getBuyerUniqueId())
-            .ifPresent(u -> dto.setCustomerEmail(u.getEmail()));
+                .ifPresent(u -> dto.setCustomerEmail(u.getEmail()));
+
         return dto;
     }
 }

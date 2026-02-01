@@ -6,8 +6,7 @@ const menuItems = [
   { name: "My Crops", path: "/farmer/my-crops", icon: "🌾" },
   { name: "Orders", path: "/farmer/orders", icon: "📦" },
   { name: "AI Advisor", path: "/farmer/ai-advisor", icon: "🤖" },
-  { name: "Analytics", path: "/farmer/analytics", icon: "📊" },
-  { name: "Alerts", path: "/farmer/alerts", icon: "🚨" },
+  
 ];
 
 const Sidebar = () => {

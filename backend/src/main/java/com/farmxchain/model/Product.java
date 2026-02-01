@@ -19,7 +19,6 @@ public class Product {
     private int quantity;
     private double price;
     private double discount;
-    private String qualityGrade;
 
     // ===== Selling Logic =====
     @Column(nullable = false)
@@ -60,9 +59,6 @@ public class Product {
 
     public double getDiscount() { return discount; }
     public void setDiscount(double discount) { this.discount = discount; }
-
-    public String getQualityGrade() { return qualityGrade; }
-    public void setQualityGrade(String qualityGrade) { this.qualityGrade = qualityGrade; }
 
     public String getFarmerUniqueId() { return farmerUniqueId; }
     public void setFarmerUniqueId(String farmerUniqueId) { this.farmerUniqueId = farmerUniqueId; }

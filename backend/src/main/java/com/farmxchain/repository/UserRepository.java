@@ -8,12 +8,9 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // 🔑 CORE LOOKUP
     Optional<User> findByUniqueId(String uniqueId);
 
-    // 🔐 Login only
     Optional<User> findByEmail(String email);
 
-    // 📊 Admin dashboard
     long countByRole(Role role);
 }

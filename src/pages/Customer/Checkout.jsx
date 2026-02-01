@@ -15,7 +15,7 @@ const Checkout = () => {
     try {
       for (const item of cart) {
         await API.post(
-          "/api/orders/create",
+          "/orders/create",
           {
             productId: item.id,
             quantity: item.quantity,

@@ -30,14 +30,14 @@ public class ProductController {
     // ================= FARMER: ADD PRODUCT =================
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(
-            @RequestParam("images") MultipartFile[] images,
-            @RequestParam("name") String name,
-            @RequestParam("type") String type,
-            @RequestParam("harvestDate") String harvestDate,
-            @RequestParam("quantity") int quantity,
-            @RequestParam("price") double price,
-            @RequestParam("discount") double discount,
-            @RequestParam("targetRole") String targetRole,
+            @RequestParam(value = "images", required = false) MultipartFile[] images,
+            @RequestParam String name,
+            @RequestParam String type,
+            @RequestParam String harvestDate,
+            @RequestParam int quantity,
+            @RequestParam double price,
+            @RequestParam double discount,
+            @RequestParam String targetRole,
             @RequestHeader("Authorization") String authHeader
     ) throws Exception {
 
@@ -51,12 +51,15 @@ public class ProductController {
         product.setQuantity(quantity);
         product.setPrice(price);
         product.setDiscount(discount);
-        product.setQualityGrade("B");
         product.setFarmerUniqueId(farmerUniqueId);
+
+        // 🔒 FORCE CONSISTENCY
         product.setTargetRole(targetRole.toUpperCase());
         product.setStatus("AVAILABLE");
 
-        product.setImageUrls(imageUploadService.uploadMultiple(images));
+        if (images != null && images.length > 0) {
+            product.setImageUrls(imageUploadService.uploadMultiple(images));
+        }
 
         return ResponseEntity.ok(productRepository.save(product));
     }

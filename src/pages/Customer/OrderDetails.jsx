@@ -13,7 +13,7 @@ const OrderDetails = () => {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const res = await API.get(`/api/orders/${id}`, {
+        const res = await API.get(`/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrder(res.data);

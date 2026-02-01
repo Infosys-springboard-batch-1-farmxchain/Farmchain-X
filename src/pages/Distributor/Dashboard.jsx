@@ -1,33 +1,62 @@
-import StatCard from "../../components/Distributor/StatCard";
-import OrderTable from "../../components/Distributor/OrderTable";
+import { useEffect, useState } from "react";
+import API from "../../api/api";
 
 const Dashboard = () => {
-  const orders = [
-    { id: "ORD001", product: "Tomato", qty: 50, status: "PLACED" },
-    { id: "ORD002", product: "Onion", qty: 100, status: "SHIPPED" },
-  ];
+  const [stats, setStats] = useState({
+    activeListings: 0,
+    totalQuantity: 0,
+    lowStock: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await API.get("/products/distributor");
+        const products = res.data || [];
+
+        setStats({
+          activeListings: products.length,
+          totalQuantity: products.reduce(
+            (sum, p) => sum + (p.quantity || 0),
+            0
+          ),
+          lowStock: products.filter(p => p.quantity < 10).length,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
-    <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-semibold">Distributor Dashboard</h2>
+    <>
+      <h1 className="text-2xl font-bold mb-6">Distributor Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="Total Orders" value="124" icon="📦" color="#4f46e5" />
-        <StatCard title="Pending Orders" value="7" icon="⏳" color="#f97316" />
-        <StatCard title="Active Products" value="18" icon="🧺" color="#16a34a" />
-        <StatCard title="Avg Quality" value="B+" icon="⭐" color="#9333ea" />
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow border">
+          <p className="text-sm text-gray-500">Active Listings</p>
+          <h2 className="text-3xl font-bold">
+            {stats.activeListings}
+          </h2>
+        </div>
 
-      <div className="bg-yellow-100 text-yellow-800 p-4 rounded">
-        🧠 <strong>Market Insight:</strong> Tomato & Onion demand is increasing
-        this week.
-      </div>
+        <div className="bg-white p-6 rounded-xl shadow border">
+          <p className="text-sm text-gray-500">Total Stock</p>
+          <h2 className="text-3xl font-bold">
+            {stats.totalQuantity} kg
+          </h2>
+        </div>
 
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Recent Orders</h3>
-        <OrderTable orders={orders} />
+        <div className="bg-white p-6 rounded-xl shadow border">
+          <p className="text-sm text-gray-500">Low Stock</p>
+          <h2 className="text-3xl font-bold text-red-600">
+            {stats.lowStock}
+          </h2>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

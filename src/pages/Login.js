@@ -25,39 +25,46 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = async () => {
-    setError("");
-    setLoading(true);
+ const handleSubmit = async () => {
+  setError("");
+  setLoading(true);
 
-    try {
-      if (mode === "login") {
-        await login(form.email.trim(), form.password);
-        navigate("/dashboard");
-      } else {
-        await API.post("/users/register", {
-          email: form.email.trim(),
-          password: form.password,
-          role: form.role,
-          phoneNumber: form.phoneNumber,
-        });
+  try {
+    if (mode === "login") {
+      const data = await login(form.email.trim(), form.password);
 
-        alert("Account created successfully. Please login.");
-        setMode("login");
-      }
-    } catch (err) {
-      console.error("AUTH ERROR:", err);
+      const role = data.role;
 
-      if (err.response?.status === 401) {
-        setError("Invalid email or password");
-      } else if (err.response?.status === 403) {
-        setError("Access denied");
-      } else {
-        setError("Server error. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+      // ✅ ROLE-BASED REDIRECT
+      if (role === "FARMER") navigate("/farmer/dashboard");
+      else if (role === "CUSTOMER") navigate("/customer/dashboard");
+      else if (role === "DISTRIBUTOR") navigate("/distributor/dashboard");
+      else if (role === "ADMIN") navigate("/admin/dashboard");
+      else navigate("/login");
+    } else {
+      await API.post("/users/register", {
+        email: form.email.trim(),
+        password: form.password,
+        role: form.role,
+        phoneNumber: form.phoneNumber,
+      });
+
+      alert("Account created successfully. Please login.");
+      setMode("login");
     }
-  };
+  } catch (err) {
+    console.error("AUTH ERROR:", err);
+
+    if (err.response?.status === 401) {
+      setError("Invalid email or password");
+    } else {
+      setError("Server error. Please try again.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-blue-200 to-green-300 relative">

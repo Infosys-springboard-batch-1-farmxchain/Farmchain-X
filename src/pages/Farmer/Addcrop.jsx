@@ -17,43 +17,33 @@ const Addcrop = () => {
   const finalPrice =
     price && discount ? price - (price * discount) / 100 : price;
 
-  // ✅ SUBMIT HANDLER
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Login required");
-      setLoading(false);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("type", type);
-    formData.append("harvestDate", harvestDate);
-    formData.append("quantity", quantity);
-    formData.append("price", price);
-    formData.append("discount", discount || 0);
-    formData.append("sellTo", sellTo);
-
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-
     try {
-      await API.post("/api/products/add", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("type", type);
+      formData.append("harvestDate", harvestDate);
+      formData.append("quantity", quantity);
+      formData.append("price", price);
+      formData.append("discount", discount || 0);
+
+      // ✅ ONLY FIX (NO UI CHANGE)
+      formData.append("targetRole", sellTo.toUpperCase());
+
+      for (let i = 0; i < images.length; i++) {
+        formData.append("images", images[i]);
+      }
+
+      await API.post("/products/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       alert("✅ Crop added successfully");
 
-      // Reset form
       setName("");
       setType("");
       setHarvestDate("");
@@ -63,15 +53,11 @@ const Addcrop = () => {
       setSellTo("customer");
       setImages([]);
     } catch (err) {
-      console.error(err);
-
-      // 🔥 SAFE ERROR EXTRACTION (THIS FIXES THE CRASH)
-      const message =
+      setError(
         err.response?.data?.message ||
-        err.response?.data?.error ||
-        "Failed to add crop. Please check inputs.";
-
-      setError(message);
+          err.response?.data ||
+          "Failed to add crop"
+      );
     } finally {
       setLoading(false);
     }
@@ -87,7 +73,6 @@ const Addcrop = () => {
         onSubmit={handleSubmit}
         className="bg-white rounded-xl shadow p-6 space-y-8"
       >
-        {/* ❌ Error Message */}
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
             {error}
@@ -97,7 +82,6 @@ const Addcrop = () => {
         {/* 🌾 Crop Details */}
         <div>
           <h2 className="text-lg font-semibold mb-4">🌾 Crop Details</h2>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <input
               type="text"
@@ -133,7 +117,9 @@ const Addcrop = () => {
 
         {/* 💰 Quantity & Pricing */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">💰 Quantity & Pricing</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            💰 Quantity & Pricing
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <input
@@ -173,7 +159,6 @@ const Addcrop = () => {
         {/* 🛒 Sell To */}
         <div>
           <h2 className="text-lg font-semibold mb-4">🛒 Sell To</h2>
-
           <div className="flex gap-6">
             <button
               type="button"
@@ -203,8 +188,9 @@ const Addcrop = () => {
 
         {/* 📷 Images */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">📷 Product Images</h2>
-
+          <h2 className="text-lg font-semibold mb-4">
+            📷 Product Images
+          </h2>
           <input
             type="file"
             multiple
@@ -220,7 +206,9 @@ const Addcrop = () => {
             type="submit"
             disabled={loading}
             className={`px-8 py-3 rounded-lg text-white ${
-              loading ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+              loading
+                ? "bg-gray-400"
+                : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Submitting..." : "Submit Crop"}

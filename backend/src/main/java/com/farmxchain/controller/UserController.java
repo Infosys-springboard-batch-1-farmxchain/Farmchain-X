@@ -41,7 +41,6 @@ public class UserController {
                     .body(Map.of("message", "Email already exists"));
         }
 
-        // Default username
         if (user.getUsername() == null || user.getUsername().isBlank()) {
             user.setUsername(
                     user.getName().toLowerCase().replaceAll("\\s+", "")
@@ -49,18 +48,14 @@ public class UserController {
             );
         }
 
-        // Prevent admin registration
         if (user.getRole() == null || user.getRole() == Role.ADMIN) {
             user.setRole(Role.CUSTOMER);
         }
 
-        // 🔑 Generate UNIQUE USER ID
         String uniqueId = user.getRole().name() + "-" + UUID.randomUUID();
         user.setUniqueId(uniqueId);
 
-        // 🔐 Hash password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
         userRepository.save(user);
 
         return ResponseEntity.ok(
@@ -74,139 +69,72 @@ public class UserController {
 
     // ===================== LOGIN =====================
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginData) {
+public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginData) {
 
-        String email = loginData.get("email");
-        String password = loginData.get("password");
+    String email = loginData.get("email");
+    String password = loginData.get("password");
 
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid credentials"));
-        }
-
-        User user = userOpt.get();
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid credentials"));
-        }
-
-        String token = jwtUtil.generateToken(
-                user.getUniqueId(),
-                user.getRole().name()
-        );
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "token", token,
-                        "uniqueId", user.getUniqueId(),
-                        "role", user.getRole(),
-                        "username", user.getUsername()
-                )
-        );
+    Optional<User> userOpt = userRepository.findByEmail(email);
+    if (userOpt.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid credentials"));
     }
 
-    // ===================== PROFILE (ME) =====================
-    @GetMapping("/me")
-    public ResponseEntity<?> getMyProfile(
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        String token = authHeader.replace("Bearer ", "");
-        String uniqueId = jwtUtil.extractUniqueId(token);
+    User user = userOpt.get();
 
-        User user = userRepository.findByUniqueId(uniqueId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return ResponseEntity.ok(user);
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid credentials"));
     }
 
-    @PutMapping("/me")
-    public ResponseEntity<?> updateMyProfile(
-            @RequestBody Map<String, String> body,
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        String token = authHeader.replace("Bearer ", "");
-        String uniqueId = jwtUtil.extractUniqueId(token);
-
-        User user = userRepository.findByUniqueId(uniqueId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        user.setPhoneNumber(body.get("phoneNumber"));
-        user.setAddress(body.get("address"));
-        user.setProfileImage(body.get("profileImage"));
-
+    // 🔥 SAFETY CHECK
+    if (user.getUniqueId() == null || user.getUniqueId().isBlank()) {
+        user.setUniqueId(user.getRole().name() + "-" + UUID.randomUUID());
         userRepository.save(user);
-        return ResponseEntity.ok(user);
     }
 
-    // ===================== ADMIN =====================
-    @GetMapping("/admin/all")
-    public ResponseEntity<?> getAllUsers(
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        String token = authHeader.replace("Bearer ", "");
-        String role = jwtUtil.extractRole(token);
+    String token = jwtUtil.generateToken(
+            user.getUniqueId(),
+            user.getRole().name()
+    );
 
-        if (!Role.ADMIN.name().equals(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Admins only"));
-        }
+    return ResponseEntity.ok(
+            Map.of(
+                    "token", token,
+                    "uniqueId", user.getUniqueId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "role", user.getRole()
+            )
+    );
+}
 
-        return ResponseEntity.ok(userRepository.findAll());
+
+ @GetMapping("/me")
+public ResponseEntity<?> getMyProfile(
+        @RequestHeader(value = "Authorization", required = false) String authHeader
+) {
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Missing token"));
     }
 
-    @PutMapping("/admin/{uniqueId}/role")
-    public ResponseEntity<?> updateUserRole(
-            @PathVariable String uniqueId,
-            @RequestBody Map<String, String> body,
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        String token = authHeader.replace("Bearer ", "");
-        String requesterRole = jwtUtil.extractRole(token);
+    String token = authHeader.substring(7);
 
-        if (!Role.ADMIN.name().equals(requesterRole)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Admins only"));
-        }
-
-        User user = userRepository.findByUniqueId(uniqueId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Role newRole = Role.valueOf(body.get("role"));
-        if (newRole == Role.ADMIN) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Cannot assign ADMIN role"));
-        }
-
-        user.setRole(newRole);
-        userRepository.save(user);
-
-        return ResponseEntity.ok(user);
+    if (!jwtUtil.validateToken(token)) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid token"));
     }
 
-    @DeleteMapping("/admin/{uniqueId}")
-    public ResponseEntity<?> deleteUser(
-            @PathVariable String uniqueId,
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        String token = authHeader.replace("Bearer ", "");
-        String requesterRole = jwtUtil.extractRole(token);
+    String uniqueId = jwtUtil.extractUniqueId(token);
 
-        if (!Role.ADMIN.name().equals(requesterRole)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Admins only"));
-        }
+    Optional<User> userOpt = userRepository.findByUniqueId(uniqueId);
 
-        User user = userRepository.findByUniqueId(uniqueId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (user.getRole() == Role.ADMIN) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Admin cannot be deleted"));
-        }
-
-        userRepository.delete(user);
-        return ResponseEntity.ok(Map.of("message", "User deleted"));
+    if (userOpt.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", "User not found"));
     }
+
+    return ResponseEntity.ok(userOpt.get());
+}
 }

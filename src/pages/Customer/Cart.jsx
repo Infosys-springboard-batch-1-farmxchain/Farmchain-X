@@ -20,7 +20,7 @@ const Cart = () => {
     try {
       const orderPromises = cartItems.map((item) =>
         API.post(
-          "/api/orders/create",
+          "/orders/create",
           {
             productId: item.id,
             quantity: item.quantity,

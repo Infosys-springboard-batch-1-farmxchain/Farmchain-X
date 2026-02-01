@@ -1,30 +1,28 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
 import Home from "./Home";
 import ForgotPassword from "./pages/ForgotPassword";
 
-/* ================= FARMER ================= */
+/* FARMER */
 import FarmerDashboard from "./pages/Farmer/Dashboard";
 import Addcrop from "./pages/Farmer/Addcrop";
 import Mycrops from "./pages/Farmer/Mycrops";
 import FarmerOrders from "./pages/Farmer/Orders";
-import Analytics from "./pages/Farmer/Analytics";
-import Alerts from "./pages/Farmer/Alerts";
+
 import AIAdvisor from "./pages/Farmer/AIAdvisor";
 
-/* ================= CUSTOMER ================= */
+/* CUSTOMER */
 import CustomerDashboard from "./pages/Customer/Dashboard";
 import Products from "./pages/Customer/Products";
 import Cart from "./pages/Customer/Cart";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetails from "./pages/Customer/OrderDetails";
-import Profile from "./pages/Profile"; // ✅ SHARED PROFILE
+import Profile from "./pages/Profile";
 
-/* ================= DISTRIBUTOR ================= */
+/* DISTRIBUTOR */
 import DistributorLayout from "./Layouts/Distributorlayout";
 import DistributorDashboard from "./pages/Distributor/Dashboard";
 import Marketplace from "./pages/Distributor/Marketplace";
@@ -32,7 +30,7 @@ import DistributorOrders from "./pages/Distributor/Orders";
 import DistributorSuppliers from "./pages/Distributor/Suppliers";
 import DistributorInsights from "./pages/Distributor/Insights";
 
-/* ================= ADMIN ================= */
+/* ADMIN */
 import AdminLayout from "./Layouts/Adminlayout";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminUsers from "./pages/Admin/Users";
@@ -43,72 +41,52 @@ import AuditLogs from "./pages/Admin/AuditLogs";
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Toaster position="top-right" />
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+    <>
+      <Toaster position="top-right" />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* ================= FARMER ================= */}
-          <Route path="/farmer/dashboard" element={<ProtectedRoute role="farmer"><FarmerDashboard /></ProtectedRoute>} />
-          <Route path="/farmer/add-crop" element={<ProtectedRoute role="farmer"><Addcrop /></ProtectedRoute>} />
-          <Route path="/farmer/my-crops" element={<ProtectedRoute role="farmer"><Mycrops /></ProtectedRoute>} />
-          <Route path="/farmer/orders" element={<ProtectedRoute role="farmer"><FarmerOrders /></ProtectedRoute>} />
-          <Route path="/farmer/analytics" element={<ProtectedRoute role="farmer"><Analytics /></ProtectedRoute>} />
-          <Route path="/farmer/alerts" element={<ProtectedRoute role="farmer"><Alerts /></ProtectedRoute>} />
-          <Route path="/farmer/ai-advisor" element={<ProtectedRoute role="farmer"><AIAdvisor /></ProtectedRoute>} />
+        {/* FARMER */}
+        <Route path="/farmer/dashboard" element={<ProtectedRoute role="FARMER"><FarmerDashboard /></ProtectedRoute>} />
+        <Route path="/farmer/add-crop" element={<ProtectedRoute role="FARMER"><Addcrop /></ProtectedRoute>} />
+        <Route path="/farmer/my-crops" element={<ProtectedRoute role="FARMER"><Mycrops /></ProtectedRoute>} />
+        <Route path="/farmer/orders" element={<ProtectedRoute role="FARMER"><FarmerOrders /></ProtectedRoute>} />
 
-          {/* ================= CUSTOMER ================= */}
-          <Route path="/customer/dashboard" element={<ProtectedRoute role="customer"><CustomerDashboard /></ProtectedRoute>} />
-          <Route path="/customer/products" element={<ProtectedRoute role="customer"><Products /></ProtectedRoute>} />
-          <Route path="/customer/cart" element={<ProtectedRoute role="customer"><Cart /></ProtectedRoute>} />
-          <Route path="/customer/orders" element={<ProtectedRoute role="customer"><MyOrders /></ProtectedRoute>} />
-          <Route path="/customer/orders/:id" element={<ProtectedRoute role="customer"><OrderDetails /></ProtectedRoute>} />
+        <Route path="/farmer/ai-advisor" element={<ProtectedRoute role="FARMER"><AIAdvisor /></ProtectedRoute>} />
 
-          {/* ================= DISTRIBUTOR ================= */}
-          <Route
-            path="/distributor"
-            element={
-              <ProtectedRoute role="distributor">
-                <DistributorLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="dashboard" element={<DistributorDashboard />} />
-            <Route path="marketplace" element={<Marketplace />} />
-            <Route path="orders" element={<DistributorOrders />} />
-            <Route path="suppliers" element={<DistributorSuppliers />} />
-            <Route path="insights" element={<DistributorInsights />} />
-          </Route>
+        {/* CUSTOMER */}
+        <Route path="/customer/dashboard" element={<ProtectedRoute role="CUSTOMER"><CustomerDashboard /></ProtectedRoute>} />
+        <Route path="/customer/products" element={<ProtectedRoute role="CUSTOMER"><Products /></ProtectedRoute>} />
+        <Route path="/customer/cart" element={<ProtectedRoute role="CUSTOMER"><Cart /></ProtectedRoute>} />
+        <Route path="/customer/orders" element={<ProtectedRoute role="CUSTOMER"><MyOrders /></ProtectedRoute>} />
+        <Route path="/customer/orders/:id" element={<ProtectedRoute role="CUSTOMER"><OrderDetails /></ProtectedRoute>} />
 
-          {/* ================= ADMIN ================= */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role="admin">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="users/:uniqueId" element={<UserDetails />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="logs" element={<AuditLogs />} />
-          </Route>
+        {/* DISTRIBUTOR */}
+         {/* Distributor Routes */}
+        <Route path="/distributor" element={<DistributorLayout />}>
+          <Route index element={<DistributorDashboard />} />
+          <Route path="dashboard" element={<DistributorDashboard />} />
+          <Route path="marketplace" element={<Marketplace />} />
+          <Route path="orders" element={<DistributorOrders></DistributorOrders>} />
+        </Route>
 
-          {/* ================= PROFILE (ALL ROLES) ================= */}
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+        {/* ADMIN */}
+        <Route path="/admin" element={<ProtectedRoute role="ADMIN"><AdminLayout /></ProtectedRoute>}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="users/:uniqueId" element={<UserDetails />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="logs" element={<AuditLogs />} />
+        </Route>
+
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    </>
   );
 }
 
