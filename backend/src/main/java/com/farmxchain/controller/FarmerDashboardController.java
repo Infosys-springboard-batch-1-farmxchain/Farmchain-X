@@ -4,8 +4,8 @@ import com.farmxchain.model.Order;
 import com.farmxchain.model.Product;
 import com.farmxchain.repository.OrderRepository;
 import com.farmxchain.repository.ProductRepository;
-import com.farmxchain.repository.UserRepository;
 import com.farmxchain.security.JwtUtil;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -14,39 +14,36 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/farmer")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/farmer/dashboard")
+@CrossOrigin(origins = "http://localhost:3000")
 public class FarmerDashboardController {
 
-    private final OrderRepository orderRepo;
-    private final ProductRepository productRepo;
-    private final UserRepository userRepo;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
     private final JwtUtil jwtUtil;
 
     public FarmerDashboardController(
-            OrderRepository orderRepo,
-            ProductRepository productRepo,
-            UserRepository userRepo,
+            OrderRepository orderRepository,
+            ProductRepository productRepository,
             JwtUtil jwtUtil
     ) {
-        this.orderRepo = orderRepo;
-        this.productRepo = productRepo;
-        this.userRepo = userRepo;
+        this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
         this.jwtUtil = jwtUtil;
     }
 
-    @GetMapping("/dashboard")
-    public Map<String, Object> dashboard(
-            @RequestHeader("Authorization") String auth
+    @GetMapping
+    public Map<String, Object> getDashboard(
+            @RequestHeader("Authorization") String authHeader
     ) {
-        String token = auth.replace("Bearer ", "");
-        String farmerId = jwtUtil.extractUniqueId(token);
+        String token = authHeader.replace("Bearer ", "");
+        String farmerUniqueId = jwtUtil.extractUniqueId(token);
 
-        List<Order> orders = orderRepo.findByFarmerUniqueId(farmerId);
-        List<Product> crops = productRepo.findByFarmerUniqueId(farmerId);
+        List<Order> orders = orderRepository.findByFarmerUniqueId(farmerUniqueId);
+        List<Product> crops = productRepository.findByFarmerUniqueId(farmerUniqueId);
 
         double totalSales = orders.stream()
-                .filter(o -> "DELIVERED".equals(o.getStatus()))
+                .filter(o -> !"CANCELLED".equals(o.getStatus()))
                 .mapToDouble(Order::getTotalPrice)
                 .sum();
 
@@ -62,12 +59,12 @@ public class FarmerDashboardController {
                 .filter(c -> c.getQuantity() < 10)
                 .count();
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("totalSales", totalSales);
-        res.put("ordersToday", ordersToday);
-        res.put("activeCrops", activeCrops);
-        res.put("lowStock", lowStock);
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalSales", totalSales);
+        stats.put("ordersToday", ordersToday);
+        stats.put("activeCrops", activeCrops);
+        stats.put("lowStock", lowStock);
 
-        return res;
+        return stats;
     }
 }

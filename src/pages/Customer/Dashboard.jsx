@@ -12,7 +12,7 @@ const CustomerDashboard = () => {
    // Inside your useEffect where you fetch orders
 const fetchDashboardData = async () => {
   try {
-    const res = await API.get("/api/orders/customer", {
+    const res = await API.get("/orders/customer", {
       headers: { Authorization: `Bearer ${token}` },
     });
     

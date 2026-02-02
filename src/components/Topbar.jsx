@@ -1,56 +1,87 @@
-import { useState } from "react";
-import ThemeSwitcher from "./Distributor/ThemeSwitcher";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const Topbar = () => {
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const logout = () => {
-    localStorage.clear();
-    navigate("/login");
+  const role = user?.role?.toUpperCase();
+
+  /* ================= THEME ================= */
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  /* ================= PROFILE DROPDOWN ================= */
+  const [open, setOpen] = useState(false);
+
+  const titleMap = {
+    FARMER: "Farmer Dashboard",
+    DISTRIBUTOR: "Distributor Dashboard",
+    CUSTOMER: "Customer Dashboard",
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-gray-800 border-b dark:border-gray-700 flex items-center justify-between px-6">
-      <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-        Distributor Dashboard
+    <header className="h-14 bg-white dark:bg-gray-900 border-b flex items-center justify-between px-6 relative">
+      {/* LEFT */}
+      <h1 className="text-lg font-bold text-gray-800 dark:text-white">
+        {titleMap[role] || "Dashboard"}
       </h1>
 
+      {/* RIGHT */}
       <div className="flex items-center gap-4 relative">
-        <ThemeSwitcher />
+        {/* 🌗 Theme Switcher */}
+        <button
+          onClick={toggleTheme}
+          className="text-sm px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
+          {theme === "light" ? "🌞 Light" : "🌙 Dark"}
+        </button>
 
-        <div className="relative">
-          <button
-            onClick={() => setOpen(!open)}
-            className="flex items-center gap-2"
-          >
-            <img
-              src="https://ui-avatars.com/api/?name=Distributor"
-              alt="profile"
-              className="w-8 h-8 rounded-full"
-            />
-            <span className="text-sm dark:text-gray-200">Distributor</span>
-          </button>
+        {/* 👤 Profile */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 focus:outline-none"
+        >
+          <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
+            {user?.name?.[0] || role?.[0]}
+          </div>
+        </button>
 
-          {open && (
-            <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 shadow rounded-lg overflow-hidden">
+        {/* 🔽 Dropdown */}
+        {open && (
+          <div className="absolute right-0 top-14 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border dark:border-gray-700 z-50">
+            <div className="p-4 border-b dark:border-gray-700">
+              <p className="font-bold dark:text-white">
+                {user?.name || "User"}
+              </p>
+              <p className="text-xs text-gray-500 uppercase">
+                {role}
+              </p>
+            </div>
+
+            <div className="p-2">
               <button
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
-                onClick={() => navigate("/distributor/profile")}
-              >
-                Profile
-              </button>
-
-              <button
-                className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-600"
                 onClick={logout}
+                className="w-full text-left px-4 py-2 text-sm rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                Logout
+                🚪 Logout
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </header>
   );

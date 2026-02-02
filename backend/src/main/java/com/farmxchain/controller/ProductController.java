@@ -52,14 +52,39 @@ public class ProductController {
         product.setPrice(price);
         product.setDiscount(discount);
         product.setFarmerUniqueId(farmerUniqueId);
-
-        // 🔒 FORCE CONSISTENCY
         product.setTargetRole(targetRole.toUpperCase());
         product.setStatus("AVAILABLE");
 
         if (images != null && images.length > 0) {
             product.setImageUrls(imageUploadService.uploadMultiple(images));
         }
+
+        return ResponseEntity.ok(productRepository.save(product));
+    }
+
+    // ================= FARMER: UPDATE PRODUCT =================
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @RequestParam double price,
+            @RequestParam int quantity,
+            @RequestParam String targetRole,
+            @RequestHeader("Authorization") String authHeader
+    ) {
+
+        String token = authHeader.replace("Bearer ", "");
+        String farmerUniqueId = jwtUtil.extractUniqueId(token);
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        if (!product.getFarmerUniqueId().equals(farmerUniqueId)) {
+            return ResponseEntity.status(403).body("Unauthorized");
+        }
+
+        product.setPrice(price);
+        product.setQuantity(quantity);
+        product.setTargetRole(targetRole.toUpperCase());
 
         return ResponseEntity.ok(productRepository.save(product));
     }
