@@ -4,6 +4,7 @@ import com.farmxchain.dto.OrderResponseDto;
 import com.farmxchain.model.Order;
 import com.farmxchain.model.Product;
 import com.farmxchain.model.User;
+import com.farmxchain.model.Role;
 import com.farmxchain.repository.ProductRepository;
 import com.farmxchain.repository.UserRepository;
 import com.farmxchain.security.JwtUtil;
@@ -40,7 +41,7 @@ public class OrderController {
         this.jwtUtil = jwtUtil;
     }
 
-    // ================= CREATE ORDER (CUSTOMER / DISTRIBUTOR)
+    // ================= CREATE ORDER
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(
             @RequestBody Map<String, Object> payload,
@@ -62,14 +63,12 @@ public class OrderController {
 
         if (role.equals("CUSTOMER") &&
                 !product.getTargetRole().equalsIgnoreCase("CUSTOMER")) {
-            return ResponseEntity.badRequest()
-                    .body("Customers cannot buy distributor products");
+            return ResponseEntity.badRequest().body("Customers cannot buy distributor products");
         }
 
         if (role.equals("DISTRIBUTOR") &&
                 !product.getTargetRole().equalsIgnoreCase("DISTRIBUTOR")) {
-            return ResponseEntity.badRequest()
-                    .body("Distributors can only buy distributor products");
+            return ResponseEntity.badRequest().body("Distributors can only buy distributor products");
         }
 
         if (quantity > product.getQuantity()) {
@@ -98,42 +97,50 @@ public class OrderController {
         User farmer = extractUser(authHeader);
         requireFarmer(farmer);
 
-        List<OrderResponseDto> response =
+        return ResponseEntity.ok(
                 orderService.getOrdersByFarmer(farmer.getUniqueId())
                         .stream()
                         .map(this::toDto)
-                        .toList();
-
-        return ResponseEntity.ok(response);
-    }
-@GetMapping("/customer")
-public ResponseEntity<List<OrderResponseDto>> getCustomerOrders(
-        @RequestHeader("Authorization") String authHeader
-) {
-    User customer = extractUser(authHeader);
-    requireCustomer(customer);
-
-    List<OrderResponseDto> response =
-        orderService.getOrdersByCustomer(customer.getUniqueId())
-            .stream()
-            .map(this::toDto)
-            .toList();
-
-    return ResponseEntity.ok(response);
-}
-
-    // ================= BUYER ORDERS (CUSTOMER / DISTRIBUTOR)
-    @GetMapping("/my")
-    public ResponseEntity<List<Order>> getMyOrders(
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        User buyer = extractUser(authHeader);
-        return ResponseEntity.ok(
-                orderService.getOrdersByCustomer(buyer.getUniqueId())
+                        .toList()
         );
     }
 
-    // ================= FARMER UPDATE STATUS
+    // ================= CUSTOMER ORDERS
+    @GetMapping("/customer")
+    public ResponseEntity<List<OrderResponseDto>> getCustomerOrders(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        User customer = extractUser(authHeader);
+        requireCustomer(customer);
+
+        return ResponseEntity.ok(
+                orderService.getOrdersByCustomer(customer.getUniqueId())
+                        .stream()
+                        .map(this::toDto)
+                        .toList()
+        );
+    }
+
+    // ================= DISTRIBUTOR ORDERS ✅ FIX
+    @GetMapping("/distributor")
+    public ResponseEntity<List<OrderResponseDto>> getDistributorOrders(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        User distributor = extractUser(authHeader);
+
+        if (distributor.getRole() != Role.DISTRIBUTOR) {
+            return ResponseEntity.status(403).body(List.of());
+        }
+
+        return ResponseEntity.ok(
+                orderService.getOrdersByBuyer(distributor.getUniqueId())
+                        .stream()
+                        .map(this::toDto)
+                        .toList()
+        );
+    }
+
+    // ================= UPDATE STATUS
     @PutMapping("/{orderId}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long orderId,

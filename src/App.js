@@ -20,7 +20,7 @@ import Products from "./pages/Customer/Products";
 import Cart from "./pages/Customer/Cart";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetails from "./pages/Customer/OrderDetails";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Customer/Profile";
 
 /* DISTRIBUTOR */
 import DistributorLayout from "./Layouts/Distributorlayout";
@@ -62,7 +62,8 @@ function App() {
         <Route path="/customer/cart" element={<ProtectedRoute role="CUSTOMER"><Cart /></ProtectedRoute>} />
         <Route path="/customer/orders" element={<ProtectedRoute role="CUSTOMER"><MyOrders /></ProtectedRoute>} />
         <Route path="/customer/orders/:id" element={<ProtectedRoute role="CUSTOMER"><OrderDetails /></ProtectedRoute>} />
-
+        <Route path="/customer/profile" element={<ProtectedRoute role="CUSTOMER"><Profile /></ProtectedRoute>} />
+ 
         {/* DISTRIBUTOR */}
          {/* Distributor Routes */}
         <Route path="/distributor" element={<DistributorLayout />}>

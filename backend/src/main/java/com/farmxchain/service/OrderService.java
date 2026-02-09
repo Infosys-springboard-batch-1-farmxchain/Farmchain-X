@@ -15,9 +15,6 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
-    // ==============================
-    // CONSTRUCTOR INJECTION
-    // ==============================
     public OrderService(OrderRepository orderRepository,
                         ProductRepository productRepository) {
         this.orderRepository = orderRepository;
@@ -26,7 +23,6 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(Order order) {
-
         Product product = productRepository.findById(order.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -34,7 +30,6 @@ public class OrderService {
             throw new RuntimeException("Insufficient stock");
         }
 
-        // Reduce stock
         product.setQuantity(product.getQuantity() - order.getQuantity());
         productRepository.save(product);
 
@@ -42,70 +37,33 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // ==============================
-    // GET ALL ORDERS
-    // ==============================
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
-    }
-
-    // ==============================
-    // GET ORDER BY ID
-    // ==============================
     public Order getOrderById(Long id) {
         return orderRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Order not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
-    // ==============================
-    // UPDATE ORDER STATUS
-    // ==============================
     @Transactional
     public Order updateStatus(Long orderId, String newStatus) {
-
         Order order = getOrderById(orderId);
-        String currentStatus = order.getStatus();
 
-        // ❌ Closed orders cannot change
-        if ("DELIVERED".equals(currentStatus) || "REJECTED".equals(currentStatus)) {
+        if ("DELIVERED".equals(order.getStatus())) {
             throw new RuntimeException("Order already closed");
-        }
-
-        // ❌ Invalid flow
-        if ("PENDING".equals(currentStatus) && "DELIVERED".equals(newStatus)) {
-            throw new RuntimeException("Order must be ACCEPTED before delivery");
-        }
-
-        if ("ACCEPTED".equals(currentStatus) && "PENDING".equals(newStatus)) {
-            throw new RuntimeException("Invalid status transition");
         }
 
         order.setStatus(newStatus);
         return orderRepository.save(order);
     }
 
-    // ==============================
-    // DELETE ORDER
-    // ==============================
-    public void deleteOrder(Long id) {
-        if (!orderRepository.existsById(id)) {
-            throw new RuntimeException("Order not found with id: " + id);
-        }
-        orderRepository.deleteById(id);
-    }
-
-    // ==============================
-    // FARMER ORDERS
-    // ==============================
     public List<Order> getOrdersByFarmer(String farmerUniqueId) {
         return orderRepository.findByFarmerUniqueId(farmerUniqueId);
     }
 
-    // ==============================
-    // CUSTOMER ORDERS
-    // ==============================
     public List<Order> getOrdersByCustomer(String customerUniqueId) {
         return orderRepository.findByBuyerUniqueId(customerUniqueId);
+    }
+
+    // ✅ REQUIRED FOR DISTRIBUTOR
+    public List<Order> getOrdersByBuyer(String buyerUniqueId) {
+        return orderRepository.findByBuyerUniqueId(buyerUniqueId);
     }
 }
