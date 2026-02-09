@@ -5,7 +5,7 @@ const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
 
   useEffect(() => {
-    API.get("/api/distributor/products")
+    API.get("/distributor/products")
       .then((res) => {
         const products = res.data || [];
 

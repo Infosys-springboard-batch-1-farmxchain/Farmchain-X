@@ -70,6 +70,7 @@ function App() {
           <Route path="dashboard" element={<DistributorDashboard />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="orders" element={<DistributorOrders></DistributorOrders>} />
+          <Route path="suppliers" element={<DistributorSuppliers></DistributorSuppliers>} />
         </Route>
 
 

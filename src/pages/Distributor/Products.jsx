@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import DistributorLayout from "../../Layouts/DistributorLayout";
+import DistributorLayout from "../../Layouts/Distributorlayout";
 import API from "../../api/api";
 import ProductCard from "../../components/ProductCard";
 

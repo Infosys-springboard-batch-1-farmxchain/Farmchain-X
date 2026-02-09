@@ -25,7 +25,7 @@ const Marketplace = () => {
  const confirmOrder = async () => {
   try {
     await API.post(
-        "/api/orders/create",
+        "/orders/create",
         { productId: selected.id, quantity: qty },
         {
           headers: {
