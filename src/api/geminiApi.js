@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// const API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
-const API_KEY="AIzaSyCuoyxGr05u5xL2shtkGgbYs-DRmTNZgS4"
+const API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+// const API_KEY="AIzaSyCuoyxGr05u5xL2shtkGgbYs-DRmTNZgS4"
 if (!API_KEY) {
   console.error("❌ Gemini API key is missing. Check .env and restart server.");
 }

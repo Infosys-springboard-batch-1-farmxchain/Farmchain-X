@@ -37,7 +37,7 @@ import AdminUsers from "./pages/Admin/Users";
 import AdminProducts from "./pages/Admin/Products";
 import AdminOrders from "./pages/Admin/Orders";
 import UserDetails from "./pages/Admin/UserDetails";
-import AuditLogs from "./pages/Admin/AuditLogs";
+
 
 function App() {
   return (
@@ -82,7 +82,7 @@ function App() {
           <Route path="users/:uniqueId" element={<UserDetails />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="orders" element={<AdminOrders />} />
-          <Route path="logs" element={<AuditLogs />} />
+          
         </Route>
 
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

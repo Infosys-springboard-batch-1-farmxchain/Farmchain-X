@@ -108,4 +108,31 @@ public class ProductController {
     public List<Product> customerMarket() {
         return productRepository.findByTargetRoleAndStatus("CUSTOMER", "AVAILABLE");
     }
+    // ================= ADMIN: ALL PRODUCTS =================
+@GetMapping("/admin/all")
+public List<Product> getAllProducts() {
+    return productRepository.findAll();
+}
+@DeleteMapping("/{id}")
+public ResponseEntity<?> deleteProduct(
+        @PathVariable Long id,
+        @RequestHeader("Authorization") String token
+) {
+    String jwt = token.replace("Bearer ", "");
+    String farmerUniqueId = jwtUtil.extractUniqueId(jwt);
+
+    Product product = productRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Product not found"));
+
+    // 🔒 Ensure farmer can delete only his own crop
+    if (!product.getFarmerUniqueId().equals(farmerUniqueId)) {
+        return ResponseEntity.status(403).body("Not allowed");
+    }
+
+    productRepository.delete(product);
+
+    return ResponseEntity.ok("Crop deleted successfully");
+}
+
+
 }

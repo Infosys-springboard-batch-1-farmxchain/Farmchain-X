@@ -13,7 +13,7 @@ const Products = () => {
 
   // 🔹 Load products from backend
   useEffect(() => {
-    API.get("/products")
+    API.get("/products/admin/all")
       .then((res) => setProducts(res.data))
       .catch(() => console.error("Failed to load products"));
   }, []);

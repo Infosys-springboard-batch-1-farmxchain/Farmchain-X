@@ -163,18 +163,21 @@ public class OrderController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    private OrderResponseDto toDto(Order order) {
-        OrderResponseDto dto = new OrderResponseDto();
-        dto.setOrderId(order.getId());
-        dto.setProductName(order.getProductName());
-        dto.setQuantity(order.getQuantity());
-        dto.setTotalPrice(order.getTotalPrice());
-        dto.setStatus(order.getStatus());
-        dto.setCreatedAt(order.getCreatedAt());
+   private OrderResponseDto toDto(Order order) {
+    return new OrderResponseDto(
+            order.getId(),
+            order.getProductName(),
+            order.getBuyerUniqueId(),
+            order.getFarmerUniqueId(),
+            order.getQuantity(),
+            order.getTotalPrice(),
+            order.getStatus()
+    );
+}
 
-        userRepository.findByUniqueId(order.getBuyerUniqueId())
-                .ifPresent(u -> dto.setCustomerEmail(u.getEmail()));
+    @GetMapping("/admin/all")
+public List<OrderResponseDto> getAllOrdersForAdmin() {
+    return orderService.getAllOrders();
+}
 
-        return dto;
-    }
 }

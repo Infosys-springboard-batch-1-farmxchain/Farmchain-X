@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchAdminStats } from "../../services/AdminService";
+import { fetchAdminUsers } from "../../services/AdminService";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -10,22 +10,30 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    fetchAdminStats().then((res) => {
-      const users = res.data;
-      setStats({
-        total: users.length,
-        farmers: users.filter(u => u.role === "farmer").length,
-        distributors: users.filter(u => u.role === "distributor").length,
-        customers: users.filter(u => u.role === "customer").length,
-      });
-    });
+    const loadStats = async () => {
+      try {
+        const res = await fetchAdminUsers();
+        const users = res.data || [];
+
+        setStats({
+          total: users.length,
+          farmers: users.filter(u => u.role === "FARMER").length,
+          distributors: users.filter(u => u.role === "DISTRIBUTOR").length,
+          customers: users.filter(u => u.role === "CUSTOMER").length,
+        });
+      } catch (err) {
+        console.error("Admin dashboard error:", err);
+      }
+    };
+
+    loadStats();
   }, []);
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard title="Total Users" value={stats.total} />
         <StatCard title="Farmers" value={stats.farmers} />
         <StatCard title="Distributors" value={stats.distributors} />

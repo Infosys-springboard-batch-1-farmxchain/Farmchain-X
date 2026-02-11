@@ -1,5 +1,6 @@
 package com.farmxchain.service;
 
+import com.farmxchain.dto.OrderResponseDto;
 import com.farmxchain.model.Order;
 import com.farmxchain.model.Product;
 import com.farmxchain.repository.OrderRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -66,4 +68,22 @@ public class OrderService {
     public List<Order> getOrdersByBuyer(String buyerUniqueId) {
         return orderRepository.findByBuyerUniqueId(buyerUniqueId);
     }
+    public List<OrderResponseDto> getAllOrders() {
+    return orderRepository.findAll()
+            .stream()
+            .map(order -> new OrderResponseDto(
+                    order.getId(),   // ✅ FIXED
+                    order.getProductName(),
+                    order.getBuyerUniqueId(),
+                    order.getFarmerUniqueId(),
+                    order.getQuantity(),
+                    order.getTotalPrice(),
+                    order.getStatus()
+            ))
+            .collect(Collectors.toList());
+}
+
+
+
+
 }

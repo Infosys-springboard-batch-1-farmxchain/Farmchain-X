@@ -25,127 +25,179 @@ const Login = () => {
     }));
   };
 
- const handleSubmit = async () => {
-  setError("");
-  setLoading(true);
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
 
-  try {
-    if (mode === "login") {
-      const data = await login(form.email.trim(), form.password);
+    try {
+      if (mode === "login") {
+        const data = await login(form.email.trim(), form.password);
 
-      const role = data.role;
+        const role = data.role;
 
-      // ✅ ROLE-BASED REDIRECT
-      if (role === "FARMER") navigate("/farmer/dashboard");
-      else if (role === "CUSTOMER") navigate("/customer/dashboard");
-      else if (role === "DISTRIBUTOR") navigate("/distributor/dashboard");
-      else if (role === "ADMIN") navigate("/admin/dashboard");
-      else navigate("/login");
-    } else {
-      await API.post("/users/register", {
-        email: form.email.trim(),
-        password: form.password,
-        role: form.role,
-        phoneNumber: form.phoneNumber,
-      });
+        if (role === "FARMER") navigate("/farmer/dashboard");
+        else if (role === "CUSTOMER") navigate("/customer/dashboard");
+        else if (role === "DISTRIBUTOR") navigate("/distributor/dashboard");
+        else if (role === "ADMIN") navigate("/admin/dashboard");
+        else navigate("/login");
+      } else {
+        await API.post("/users/register", {
+          email: form.email.trim(),
+          password: form.password,
+          role: form.role,
+          phoneNumber: form.phoneNumber,
+        });
 
-      alert("Account created successfully. Please login.");
-      setMode("login");
+        alert("Account created successfully. Please login.");
+        setMode("login");
+      }
+    } catch (err) {
+      console.error("AUTH ERROR:", err);
+
+      if (err.response?.status === 401) {
+        setError("Invalid email or password");
+      } else {
+        setError("Server error. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("AUTH ERROR:", err);
-
-    if (err.response?.status === 401) {
-      setError("Invalid email or password");
-    } else {
-      setError("Server error. Please try again.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-200 via-blue-200 to-green-300 relative">
-      <div className="relative z-10 w-full max-w-md bg-white/30 backdrop-blur-xl rounded-2xl shadow-2xl p-8">
-        <h1 className="text-3xl font-extrabold text-center">🌾 FarmXChain</h1>
-        <p className="text-center text-gray-600 mb-6">
-          {mode === "login" ? "Login to continue" : "Create your account"}
-        </p>
+    <div className="min-h-screen flex bg-white">
 
-        <div className="flex mb-6 rounded-full bg-white/60 p-1">
-          {["login", "register"].map((m) => (
-            <button
-              key={m}
-              onClick={() => {
-                setError("");
-                setMode(m);
-              }}
-              className={`w-1/2 py-2 rounded-full font-semibold transition ${
-                mode === m ? "bg-green-600 text-white" : "text-gray-700"
-              }`}
-            >
-              {m === "login" ? "Login" : "Register"}
-            </button>
-          ))}
-        </div>
+      {/* LEFT SIDE – FARM IMAGE */}
+      <div
+        className="hidden lg:flex w-1/2 bg-cover bg-center relative"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1500651230702-0e2d8a49d4ad?auto=format&fit=crop&w=2000&q=80')"
+        }}
+      >
+        <div className="absolute inset-0 bg-green-900/40"></div>
 
-        {error && (
-          <p className="text-red-600 text-sm mb-4 text-center font-semibold">
-            {error}
+        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+          <h1 className="text-5xl font-extrabold leading-tight">
+            Welcome to <br />
+            <span className="text-green-300">FarmXChain</span>
+          </h1>
+
+          <p className="mt-6 text-lg text-green-100 max-w-md leading-relaxed">
+            AI-powered agricultural marketplace connecting farmers,
+            distributors, and buyers with transparent pricing and
+            secure trade systems.
           </p>
-        )}
 
-        <div className="space-y-4">
-          {mode === "register" && (
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/80"
-            >
-              <option value="FARMER">🌾 Farmer</option>
-              <option value="DISTRIBUTOR">🚚 Distributor</option>
-              <option value="CUSTOMER">🛒 Customer</option>
-            </select>
+          <div className="mt-10 space-y-3 text-green-200 text-sm">
+            <p>✔ AI Price Prediction</p>
+            <p>✔ Secure Blockchain Transactions</p>
+            <p>✔ Live Market Insights</p>
+            <p>✔ Role-Based Dashboards</p>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE – AUTH PANEL */}
+      <div className="flex w-full lg:w-1/2 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold text-gray-800">
+              {mode === "login"
+                ? "Login to your account"
+                : "Create your account"}
+            </h2>
+
+            <p className="text-gray-500 mt-2">
+              {mode === "login"
+                ? "Access your dashboard and manage trades"
+                : "Join the smart agricultural marketplace"}
+            </p>
+          </div>
+
+          {/* TOGGLE */}
+          <div className="flex mb-6 border border-gray-200 rounded-lg overflow-hidden">
+            {["login", "register"].map((m) => (
+              <button
+                key={m}
+                onClick={() => {
+                  setError("");
+                  setMode(m);
+                }}
+                className={`w-1/2 py-3 font-semibold transition-all duration-200 ${
+                  mode === m
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {m === "login" ? "Login" : "Register"}
+              </button>
+            ))}
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+              {error}
+            </div>
           )}
 
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            placeholder="Email"
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl bg-white/80"
-          />
+          <div className="space-y-4">
 
-          {mode === "register" && (
+            {mode === "register" && (
+              <select
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="FARMER">🌾 Farmer</option>
+                <option value="DISTRIBUTOR">🚚 Distributor</option>
+                <option value="CUSTOMER">🛒 Customer</option>
+              </select>
+            )}
+
             <input
-              name="phoneNumber"
-              value={form.phoneNumber}
-              placeholder="Mobile Number"
+              name="email"
+              type="email"
+              value={form.email}
+              placeholder="Email address"
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl bg-white/80"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-          )}
 
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            placeholder="Password"
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl bg-white/80"
-          />
+            {mode === "register" && (
+              <input
+                name="phoneNumber"
+                value={form.phoneNumber}
+                placeholder="Mobile number"
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            )}
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-500 text-white font-bold shadow-lg disabled:opacity-60"
-          >
-            {loading ? "Please wait..." : mode === "login" ? "Login" : "Create Account"}
-          </button>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              placeholder="Password"
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-all duration-200 disabled:opacity-60 shadow-md"
+            >
+              {loading
+                ? "Please wait..."
+                : mode === "login"
+                ? "Login"
+                : "Create Account"}
+            </button>
+
+          </div>
         </div>
       </div>
     </div>

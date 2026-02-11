@@ -1,12 +1,24 @@
 import API from "../api/api";
 
-export const fetchAllUsers = () =>
-  API.get("/users/all-with-passwords");
+/**
+ * Used by AdminDashboard
+ */
+export const fetchAdminUsers = () => {
+  return API.get("/admin/users");
+};
 
-export const updateUserRole = (id, role) =>
-  API.put(`/users/${id}/role`, { role });
+/**
+ * Used by Admin Users page
+ * (alias for clarity)
+ */
+export const fetchAllUsers = () => {
+  return API.get("/admin/users");
+};
 
-export const deleteUser = (id) =>
-  API.delete(`/users/${id}`);
-export const fetchAdminStats = () =>
-  API.get("/users/all-with-passwords");
+/**
+ * Delete user by uniqueId
+ * (make sure backend endpoint exists)
+ */
+export const deleteUser = (uniqueId) => {
+  return API.delete(`/admin/users/${uniqueId}`);
+};
